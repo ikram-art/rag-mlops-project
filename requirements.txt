@@ -10,3 +10,5 @@ langchain-text-splitters
 sentence-transformers
 pytest
 boto3
+jinja2
+mlflow

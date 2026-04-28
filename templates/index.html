@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF RAG Studio</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo-block">
+        <div class="logo-icon">AI</div>
+        <div>
+          <h1>PDF RAG Studio</h1>
+          <p>Assistant intelligent documentaire</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-item active">Assistant</div>
+        <div class="nav-item">Documents</div>
+        <div class="nav-item">Indexation</div>
+        <div class="nav-item">Paramètres</div>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Stack active</h3>
+        <div class="stack-tags">
+          <span>FastAPI</span>
+          <span>ChromaDB</span>
+          <span>Ollama</span>
+          <span>Mistral</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <p>Système RAG PDF</p>
+        <small>Version démo soutenance</small>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="hero">
+        <div>
+          <span class="hero-badge">Plateforme IA documentaire</span>
+          <h2>Interrogez vos PDF avec une interface moderne et intelligente</h2>
+          <p>
+            Téléversez un document, indexez son contenu, puis discutez avec lui
+            via une interface conversationnelle plus professionnelle.
+          </p>
+        </div>
+      </header>
+
+      <section class="dashboard-grid">
+        <div class="glass-card upload-panel">
+          <div class="card-top">
+            <div>
+              <h3>Gestion du document</h3>
+              <p>Importer, indexer et suivre l’état du document actif.</p>
+            </div>
+            <span class="chip blue">Upload</span>
+          </div>
+
+          <div class="dropzone">
+            <div class="drop-icon">📄</div>
+            <h4>Glisser-déposer votre PDF</h4>
+            <p>ou sélectionner manuellement un fichier à indexer</p>
+
+            <label for="pdfFile" class="custom-file-btn">Choisir un PDF</label>
+            <input type="file" id="pdfFile" accept="application/pdf" />
+
+            <div class="selected-file" id="fileInfo">Aucun fichier sélectionné</div>
+          </div>
+
+          <div class="controls">
+            <label class="toggle-wrapper">
+              <input type="checkbox" id="resetDb" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span>Réinitialiser la base avant indexation</span>
+          </div>
+
+          <button class="primary-action" id="uploadBtn">Uploader et indexer</button>
+
+          <div class="status-box">
+            <div class="status-title-row">
+              <h4>État actuel</h4>
+              <span class="chip neutral">Suivi</span>
+            </div>
+            <p id="docStatus">Aucun document importé pour le moment.</p>
+          </div>
+        </div>
+
+        <div class="glass-card chat-panel">
+          <div class="card-top">
+            <div>
+              <h3>Assistant conversationnel</h3>
+              <p>Pose des questions sur le document et reçois des réponses contextuelles.</p>
+            </div>
+            <span class="chip violet">Chat IA</span>
+          </div>
+
+          <div class="chat-area" id="chatWindow">
+            <div class="msg assistant">
+              <div class="msg-avatar assistant-avatar">A</div>
+              <div class="msg-bubble">
+                <div class="msg-role">Assistant</div>
+                <p>Bonjour. Téléverse d’abord un PDF, puis pose-moi une question sur son contenu.</p>
+              </div>
+            </div>
+          </div>
+
+          <form class="chat-form" id="chatForm">
+            <div class="chat-input-wrap">
+              <input
+                type="text"
+                id="questionInput"
+                placeholder="Ex : Résume-moi l’objectif principal du document"
+              />
+              <button type="submit" class="send-btn">Envoyer</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    console.log("🔥 JS LOADED");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const pdfFile = document.getElementById("pdfFile");
+    const docStatus = document.getElementById("docStatus");
+    
+    const chatForm = document.getElementById("chatForm");
+    const questionInput = document.getElementById("questionInput");
+    const chatWindow = document.getElementById("chatWindow");
+
+    pdfFile.addEventListener("change", () => {
+  const fileInfo = document.getElementById("fileInfo");
+  fileInfo.innerText = pdfFile.files.length
+    ? pdfFile.files[0].name
+    : "Aucun fichier sélectionné";
+});
+    // ================= UPLOAD =================
+    uploadBtn.addEventListener("click", async () => {
+      if (!pdfFile.files.length) {
+        docStatus.innerText = "❌ Aucun fichier sélectionné";
+        return;
+      }
+    
+      const formData = new FormData();
+      formData.append("file", pdfFile.files[0]);
+      const resetDb = document.getElementById("resetDb");
+      formData.append("reset_db", resetDb.checked ? "true" : "false");
+    
+      docStatus.innerText = "⏳ Upload et indexation...";
+    
+      try {
+        const res = await fetch("/upload", {
+          method: "POST",
+          body: formData
+        });
+    
+        const text = await res.text();
+        console.log(text);
+    
+        if (data.error) {
+          docStatus.innerText = "❌ " + data.error;
+        } else {
+          docStatus.innerText = "✅ PDF indexé avec succès";
+        }
+      } catch (err) {
+        docStatus.innerText = "❌ Erreur upload";
+      }
+    });
+    
+    // ================= ASK =================
+    
+    chatForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+  const question = questionInput.value.trim();
+  if (!question) return;
+
+  chatWindow.innerHTML += `
+    <div class="msg user">
+      <div class="msg-bubble">${question}</div>
+    </div>
+  `;
+
+  questionInput.value = "";
+
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({ question: question })
+    });
+
+    const text = await res.text();
+    console.log("RAW RESPONSE:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Réponse backend non JSON : " + text);
+    }
+
+    if (!res.ok) {
+      throw new Error(data.error || "Erreur HTTP " + res.status);
+    }
+
+    if (data.error) {
+    docStatus.innerText = "❌ " + data.error;
+    } else {
+      const chunks = data.result?.chunks_created ?? 0;
+      docStatus.innerText = `✅ PDF indexé avec succès (${chunks} chunks)`;
+    }
+
+    chatWindow.innerHTML += `
+      <div class="msg assistant">
+        <div class="msg-avatar assistant-avatar">A</div>
+        <div class="msg-bubble">
+          <p>${data.answer || "Aucune réponse"}</p>
+        </div>
+      </div>
+    `;
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+  } catch (err) {
+    console.error("❌ error:", err);
+    chatWindow.innerHTML += `
+      <div class="msg assistant">
+        <div class="msg-bubble">❌ ${err.message}</div>
+      </div>
+    `;
+  }
+});
+    console.log("🔥 JS LOADED");
+    </script>
+</body>
+</html>
