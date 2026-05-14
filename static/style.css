@@ -346,8 +346,8 @@ input[type="file"] {
   border: none;
   border-radius: 16px;
   padding: 16px 18px;
-  background: linear-gradient(135deg, var(--green), #16a34a);
-  color: white;
+  background: #15803d;
+  color: #ffffff;
   font-size: 1.08rem;
   font-weight: 800;
   cursor: pointer;
