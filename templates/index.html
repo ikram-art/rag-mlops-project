@@ -76,24 +76,19 @@
             <div class="selected-file" id="fileInfo">Aucun fichier sélectionné</div>
           </div>
 
+          
           <div class="controls">
-            <label class="toggle-wrapper">
+            <label class="toggle-wrapper" for="resetDb">
               <input type="checkbox" id="resetDb" checked />
-              <span class="toggle-slider"></span>
+              <span class="toggle-slider" aria-hidden="true"></span>
+              <span class="sr-only">Réinitialiser la base avant indexation</span>
             </label>
-            <span>Réinitialiser la base avant indexation</span>
+            <span id="resetDbLabel">Réinitialiser la base avant indexation</span>
           </div>
-
           <button class="primary-action" id="uploadBtn">Uploader et indexer</button>
 
-          <div class="status-box">
-            <div class="status-title-row">
-              <h4>État actuel</h4>
-              <span class="chip neutral">Suivi</span>
-            </div>
-            <p id="docStatus">Aucun document importé pour le moment.</p>
+          <div class="status-box" style="display:none;"></div>
           </div>
-        </div>
 
         <div class="glass-card chat-panel">
           <div class="card-top">
@@ -130,10 +125,11 @@
   </div>
 
   <script>
+    const sendButton = document.querySelector(".send-btn");
     console.log("🔥 JS LOADED");
     const uploadBtn = document.getElementById("uploadBtn");
     const pdfFile = document.getElementById("pdfFile");
-    const docStatus = document.getElementById("docStatus");
+    
     
     const chatForm = document.getElementById("chatForm");
     const questionInput = document.getElementById("questionInput");
@@ -147,51 +143,63 @@
 });
     // ================= UPLOAD =================
     uploadBtn.addEventListener("click", async () => {
-      if (!pdfFile.files.length) {
-        docStatus.innerText = "❌ Aucun fichier sélectionné";
-        return;
-      }
-    
-      const formData = new FormData();
-      formData.append("file", pdfFile.files[0]);
-      const resetDb = document.getElementById("resetDb");
-      formData.append("reset_db", resetDb.checked ? "true" : "false");
-    
-      docStatus.innerText = "⏳ Upload et indexation...";
-    
-      try {
-        const res = await fetch("/upload", {
-          method: "POST",
-          body: formData
-        });
-    
-        const text = await res.text();
-        console.log(text);
-    
-        if (data.error) {
-          docStatus.innerText = "❌ " + data.error;
-        } else {
-          docStatus.innerText = "✅ PDF indexé avec succès";
-        }
-      } catch (err) {
-        docStatus.innerText = "❌ Erreur upload";
-      }
+  if (!pdfFile.files.length) {
+    console.warn("Aucun fichier sélectionné");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", pdfFile.files[0]);
+
+  const resetDb = document.getElementById("resetDb");
+  formData.append("reset_db", resetDb.checked ? "true" : "false");
+
+  try {
+    const res = await fetch("/upload", {
+      method: "POST",
+      body: formData
     });
+
+    const text = await res.text();
+    console.log("UPLOAD RESPONSE:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.warn("Réponse non JSON");
+      return;
+    }
+
+    if (data.error) {
+      console.error("Upload error:", data.error);
+    } else {
+      console.log("Upload OK");
+    }
+
+  } catch (err) {
+    console.error("Erreur upload:", err);
+  }
+});
     
     // ================= ASK =================
     
-    chatForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
   const question = questionInput.value.trim();
   if (!question) return;
 
-  chatWindow.innerHTML += `
+  sendButton.disabled = true;
+  sendButton.innerText = "Réponse en cours...";
+
+  chatWindow.insertAdjacentHTML("beforeend", `
     <div class="msg user">
       <div class="msg-bubble">${question}</div>
     </div>
-  `;
+  `);
 
+  chatWindow.scrollTop = chatWindow.scrollHeight;
   questionInput.value = "";
 
   try {
@@ -218,30 +226,34 @@
     }
 
     if (data.error) {
-    docStatus.innerText = "❌ " + data.error;
+      console.error("Ask error:", data.error);
     } else {
-      const chunks = data.result?.chunks_created ?? 0;
-      docStatus.innerText = `✅ PDF indexé avec succès (${chunks} chunks)`;
+      console.log("Ask OK");
     }
 
-    chatWindow.innerHTML += `
+    chatWindow.insertAdjacentHTML("beforeend", `
       <div class="msg assistant">
         <div class="msg-avatar assistant-avatar">A</div>
         <div class="msg-bubble">
           <p>${data.answer || "Aucune réponse"}</p>
         </div>
       </div>
-    `;
+    `);
 
     chatWindow.scrollTop = chatWindow.scrollHeight;
 
   } catch (err) {
     console.error("❌ error:", err);
-    chatWindow.innerHTML += `
+
+    chatWindow.insertAdjacentHTML("beforeend", `
       <div class="msg assistant">
         <div class="msg-bubble">❌ ${err.message}</div>
       </div>
-    `;
+    `);
+
+  } finally {
+    sendButton.disabled = false;
+    sendButton.innerText = "Envoyer";
   }
 });
     console.log("🔥 JS LOADED");
