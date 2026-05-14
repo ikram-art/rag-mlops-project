@@ -518,10 +518,6 @@ input[type="file"] {
   box-shadow: 0 14px 28px rgba(56, 189, 248, 0.18);
 }
 
-.send-btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-}
 
 .send-btn:hover {
   transform: translateY(-1px);
