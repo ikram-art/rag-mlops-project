@@ -12,3 +12,6 @@ pytest
 boto3
 jinja2
 mlflow
+langchain-huggingface
+prometheus-fastapi-instrumentator
+aiofiles
