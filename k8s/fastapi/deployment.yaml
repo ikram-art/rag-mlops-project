@@ -15,12 +15,27 @@ spec:
     spec:
       nodeSelector:
         role: api
+
+      automountServiceAccountToken: false
+
       containers:
         - name: fastapi
           image: tech2026/rag-api:v25
           imagePullPolicy: IfNotPresent
+
           ports:
             - containerPort: 8000
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+              ephemeral-storage: "2Gi"
+
           env:
             - name: CHROMA_HOST
               value: "chromadb.chromadb.svc.cluster.local"
